@@ -67,6 +67,20 @@ High-level steps:
 3. Set env vars (`OPENAI_API_KEY`, `TWILIO_*`, `ASYNC_REPLY=true`, `MEMORY_BACKEND=redis`, etc.)
 4. Configure Twilio webhook to `https://<cloud-run-url>/webhooks/twilio/whatsapp`
 
+### Example: Render (recommended)
+
+This repo includes a Blueprint at `render.yaml`.
+
+1. Push this repo to GitHub:
+   - Authenticate `gh` (recommended: use a GitHub PAT and `gh auth login --with-token`)
+   - Create + push:
+     - `gh repo create whatsapp-ai-assistant --private --source . --remote origin --push`
+2. In Render Dashboard:
+   - New → **Blueprint** → select the repo
+   - Fill required env vars: `OPENAI_API_KEY`, `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, `TWILIO_WHATSAPP_NUMBER`
+3. After deploy, set Twilio WhatsApp webhook to:
+   - `https://<render-service-url>/webhooks/twilio/whatsapp`
+
 ## Optional: RAG (custom docs)
 
 1. Put `.txt`/`.md` docs in `data/docs/`
