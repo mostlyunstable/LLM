@@ -42,3 +42,8 @@ class RedisMemoryStore(MemoryStore):
         # setnx with expiration
         return bool(self._r.set(key, str(time.time()), nx=True, ex=max(1, int(cooldown_seconds))))
 
+    def message_id_ok(self, sender: str, *, message_id: str, ttl_seconds: int) -> bool:
+        if not message_id:
+            return True
+        key = f"wa:msg:{sender}:{message_id}"
+        return bool(self._r.set(key, "1", nx=True, ex=max(60, int(ttl_seconds))))

@@ -26,6 +26,7 @@ async def twilio_whatsapp_webhook(request: Request, background_tasks: Background
 
     # Basic fields documented by Twilio for WhatsApp inbound messages.
     sender = form_data.get("From", "").strip()
+    message_sid = form_data.get("MessageSid", "").strip()
     body = (form_data.get("Body") or "").strip()
     num_media = int(form_data.get("NumMedia") or "0")
     media: list[dict[str, str]] = []
@@ -62,12 +63,20 @@ async def twilio_whatsapp_webhook(request: Request, background_tasks: Background
     )
 
     if settings.ASYNC_REPLY:
-        background_tasks.add_task(assistant.handle_and_send, sender=sender, body=body, media=media)
+        background_tasks.add_task(
+            assistant.handle_and_send,
+            sender=sender,
+            body=body,
+            media=media,
+            message_id=message_sid,
+        )
         # Ack fast; send the actual reply via Twilio REST API from the background task.
         return Response(content=str(MessagingResponse()), media_type="application/xml")
 
     started = time.monotonic()
-    reply = await assistant.handle(sender=sender, body=body, media=media)
+    reply = await assistant.handle(sender=sender, body=body, media=media, message_id=message_sid)
+    if reply is None:
+        return Response(content=str(MessagingResponse()), media_type="application/xml")
     took_ms = int((time.monotonic() - started) * 1000)
 
     resp = MessagingResponse()

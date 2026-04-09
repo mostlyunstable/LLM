@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     MEMORY_TTL_SECONDS: int = Field(default=60 * 60 * 6, ge=60)  # 6 hours
     MEMORY_MAX_TURNS: int = Field(default=8, ge=0, le=50)
     REDIS_URL: str = Field(default="redis://localhost:6379/0")
+    DEDUP_TTL_SECONDS: int = Field(default=60 * 60 * 24, ge=60)  # 24 hours
 
     # WhatsApp-friendly response shaping
     WHATSAPP_MAX_CHARS: int = Field(default=700, ge=80, le=1600)

@@ -36,12 +36,16 @@ class MemoryStore:
     def cooldown_ok(self, sender: str, *, cooldown_seconds: float) -> bool:  # pragma: no cover
         return True
 
+    def message_id_ok(self, sender: str, *, message_id: str, ttl_seconds: int) -> bool:  # pragma: no cover
+        return True
+
 
 class InMemoryStore(MemoryStore):
     def __init__(self, *, ttl_seconds: int) -> None:
         super().__init__(ttl_seconds=ttl_seconds)
         self._data: Dict[str, Tuple[float, List[MemoryMessage]]] = {}
         self._cooldown_until: Dict[str, float] = {}
+        self._seen_message_ids: Dict[str, Dict[str, float]] = {}
 
     def _evict_if_needed(self, sender: str) -> None:
         now = time.time()
@@ -67,3 +71,16 @@ class InMemoryStore(MemoryStore):
         self._cooldown_until[sender] = now + cooldown_seconds
         return True
 
+    def message_id_ok(self, sender: str, *, message_id: str, ttl_seconds: int) -> bool:
+        if not message_id:
+            return True
+        now = time.time()
+        bucket = self._seen_message_ids.setdefault(sender, {})
+        # prune expired
+        for mid, exp in list(bucket.items()):
+            if now > exp:
+                bucket.pop(mid, None)
+        if message_id in bucket:
+            return False
+        bucket[message_id] = now + max(60, int(ttl_seconds))
+        return True

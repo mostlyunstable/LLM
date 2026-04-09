@@ -40,7 +40,14 @@ class AssistantService:
         msgs.append(ChatMessage(role="user", content=user_text))
         return msgs
 
-    async def handle(self, *, sender: str, body: str, media: list[dict[str, str]]) -> str:
+    async def handle(
+        self, *, sender: str, body: str, media: list[dict[str, str]], message_id: str = ""
+    ) -> str | None:
+        if message_id and not self._memory.message_id_ok(
+            sender, message_id=message_id, ttl_seconds=self._settings.DEDUP_TTL_SECONDS
+        ):
+            logger.info("duplicate_message_ignored sender=%s message_id=%s", sender, message_id)
+            return None
         if not self._memory.cooldown_ok(sender, cooldown_seconds=self._settings.PER_SENDER_COOLDOWN_SECONDS):
             return "One sec—please wait a moment and try again."
 
@@ -123,8 +130,12 @@ class AssistantService:
         self._memory.set(sender, self._trim_history(new_history))
         return reply
 
-    async def handle_and_send(self, *, sender: str, body: str, media: list[dict[str, str]]) -> None:
-        reply = await self.handle(sender=sender, body=body, media=media)
+    async def handle_and_send(
+        self, *, sender: str, body: str, media: list[dict[str, str]], message_id: str = ""
+    ) -> None:
+        reply = await self.handle(sender=sender, body=body, media=media, message_id=message_id)
+        if reply is None:
+            return
         if not self._twilio.can_send():
             logger.warning("ASYNC_REPLY enabled but Twilio outbound not configured; dropping reply")
             return
