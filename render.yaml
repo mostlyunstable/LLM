@@ -44,10 +44,16 @@ services:
         value: "21600"
       - key: MEMORY_MAX_TURNS
         value: "8"
+      - key: DEDUP_TTL_SECONDS
+        value: "86400"
       - key: WHATSAPP_MAX_CHARS
         value: "700"
       - key: PER_SENDER_COOLDOWN_SECONDS
         value: "0.5"
+      - key: LOG_LEVEL
+        value: INFO
+      - key: WEB_CONCURRENCY
+        value: "1"
 
       # Optional features (keep off by default)
       - key: RAG_ENABLED
